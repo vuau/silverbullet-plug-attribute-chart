@@ -1,0 +1,19 @@
+{
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "fmt": {
+    "exclude": [
+      "*.md",
+      "**/*.md",
+      "*.plug.js"
+    ]
+  },
+  "importMap": "import_map.json",
+  "tasks": {
+    "build": "silverbullet plug:compile --importmap import_map.json attributeChart.plug.yaml",
+    "watch": "silverbullet plug:compile -w --importmap import_map.json attributeChart.plug.yaml"
+  }
+}

@@ -1,0 +1,5 @@
+name: attributeChart
+functions:
+  attributeChartWidget:
+    path: attributeChart.ts:widget
+    codeWidget: attributeChart
