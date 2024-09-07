@@ -36,4 +36,4 @@ var q=Object.defineProperty;var P=(e,t)=>{for(var r in t)q(e,r,{get:t[r],enumera
             }
           })
         });
-      `}}catch(o){return{markdown:`**Error:** ${o.message}`}}}function me(e,t={}){let r=e.map(o=>o.name.replace("Journal/Day/","")),n=[];for(let o of Object.values(t))o.name&&n.push({type:o.type||"line",label:o.name,data:e.map(s=>s.attribute[o.name])});return{labels:r,datasets:n}}var j={attributeChartWidget:U},D={name:"attributeChart",functions:{attributeChartWidget:{path:"attributeChart.ts:widget",codeWidget:"attributeChart"}},assets:{}},St={manifest:D,functionMapping:j};S(j,D);export{St as plug};
+      `}}catch(o){return{markdown:`**Error:** ${o.message}`}}}function me(e,t={}){let r=e.map(o=>o.name.replace("Journal/Day/","")),n=[];for(let o of Object.values(t))o.name&&n.push({type:o.type||"line",label:o.name,data:e.map(s=>s.attribute&&s.attribute[o.name])});return{labels:r,datasets:n}}var j={attributeChartWidget:U},D={name:"attributeChart",functions:{attributeChartWidget:{path:"attributeChart.ts:widget",codeWidget:"attributeChart"}},assets:{}},St={manifest:D,functionMapping:j};S(j,D);export{St as plug};

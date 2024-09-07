@@ -79,7 +79,7 @@ export function createChartData(results: any, attributes: { [name: string]: { na
     datasets.push({
       type: attribute.type || 'line',
       label: attribute.name,
-      data: results.map((d: any) => d.attribute[attribute.name]),
+      data: results.map((d: any) => d.attribute && d.attribute[attribute.name]),
     }); 
   }
   return { labels, datasets };
