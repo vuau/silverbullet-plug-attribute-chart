@@ -3,6 +3,15 @@ import {parseQuery} from "../silverbullet/plug-api/lib/parse_query.ts";
 import { CodeWidgetContent } from "../silverbullet/plug-api/types.ts";
 import { loadPageObject } from "../silverbullet/plugs/template/page.ts";
 
+type Attribute = { name: string; type?: string };
+
+type ChartConfig = {
+  query: string;
+  attributes: Attribute[];
+  title?: string;
+  description?: string;
+};
+
 export async function widget(
   bodyText: string,
   pageName: string
@@ -10,9 +19,9 @@ export async function widget(
   const config = await system.getSpaceConfig();
   const pageObject = await loadPageObject(pageName);
   try {
-    const chartConfig:any = await YAML.parse(bodyText);
+    const chartConfig: ChartConfig = await YAML.parse(bodyText);
     const query = await parseQuery(chartConfig.query);
-    const attributes = chartConfig.attributes || {};
+    const attributes = chartConfig.attributes || [];
     const results = await system.invokeFunction(
       "query.renderQuery",
       query,
@@ -47,10 +56,8 @@ export async function widget(
       script: `
         loadJsByUrl("https://cdn.jsdelivr.net/npm/chart.js").then(() => {
           const chartData = ${JSON.stringify(createChartData(results, attributes))};
-          console.log(${JSON.stringify({ results, attributes })}, chartData);
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
-            type: 'line',
             data: chartData,
             options: {
               scales: {
@@ -68,11 +75,10 @@ export async function widget(
   }
 }
 
-export function createChartData(results: any, attributes: { [name: string]: { name: string; type?: string }}= {}) {
+export function createChartData(results: any, attributes: Attribute[] = []) {
   const labels = results.map((d: any) => d.name.replace("Journal/Day/", ""));
   const datasets = [];
-
-  for (const attribute of Object.values(attributes)) {
+  for (const attribute of attributes) {
     if (!attribute.name) {
       continue;
     }

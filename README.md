@@ -8,13 +8,11 @@ Widget example:
 ```
 ```attributeChart  
 query:  
-  page where name =~ /^Journal\/Day\// order by displayName desc  
+  page where name =~ /^Journal\/Day\// 
 attributes:  
-  line1:  
-    name: exercised  
+  - name: hoursOfExercise  
     type: line  
-  line2:  
-    name: mood  
+  - name: mood  
     type: line
 ```
 
