@@ -3,7 +3,11 @@ import {parseQuery} from "../silverbullet/plug-api/lib/parse_query.ts";
 import { CodeWidgetContent } from "../silverbullet/plug-api/types.ts";
 import { loadPageObject } from "../silverbullet/plugs/template/page.ts";
 
-type Attribute = { name: string; type?: string };
+type Attribute = {
+  name: string;
+  type?: string
+  label?: string
+};
 
 type ChartConfig = {
   query: string;
@@ -84,7 +88,7 @@ export function createChartData(results: any, attributes: Attribute[] = []) {
     }
     datasets.push({
       type: attribute.type || 'line',
-      label: attribute.name,
+      label: attribute.label || attribute.name,
       data: results.map((d: any) => d.attribute && d.attribute[attribute.name]),
     }); 
   }

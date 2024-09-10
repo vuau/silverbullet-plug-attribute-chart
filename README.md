@@ -12,8 +12,10 @@ query:
 attributes:  
   - name: hoursOfExercise  
     type: line  
+    label: Hours Of Exercise
   - name: mood  
     type: line
+    label: Mood Score
 ```
 
 Install this plug: run command "Plug: Add" and add the following URL
