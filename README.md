@@ -51,6 +51,8 @@ You can also pass options to the chart:
         max: 10
 ```
 ~~~
+![image](https://github.com/user-attachments/assets/e97baa31-8bbb-4b2d-85dc-c8364da3f407)
+
 
 Install this plug: run command "Plug: Add" and add the following URL
 ```
