@@ -1,4 +1,617 @@
-var q=Object.defineProperty;var P=(e,t)=>{for(var r in t)q(e,r,{get:t[r],enumerable:!0})};var b=typeof window>"u"&&typeof globalThis.WebSocketPair>"u";typeof Deno>"u"&&(self.Deno={args:[],build:{arch:"x86_64"},env:{get(){}}});var T=new Map,h=0;function m(e){self.postMessage(e)}b&&(globalThis.syscall=async(e,...t)=>await new Promise((r,n)=>{h++,T.set(h,{resolve:r,reject:n}),m({type:"sys",id:h,name:e,args:t})}));function A(e,t){b&&(self.addEventListener("message",r=>{(async()=>{let n=r.data;switch(n.type){case"inv":{let o=e[n.name];if(!o)throw new Error(`Function not loaded: ${n.name}`);try{let s=await Promise.resolve(o(...n.args||[]));m({type:"invr",id:n.id,result:s})}catch(s){console.error("An exception was thrown as a result of invoking function",n.name,"error:",s.message),m({type:"invr",id:n.id,error:s.message})}}break;case"sysr":{let o=n.id,s=T.get(o);if(!s)throw Error("Invalid request id");T.delete(o),n.error?s.reject(new Error(n.error)):s.resolve(n.result)}break}})().catch(console.error)}),m({type:"manifest",manifest:t}))}function L(e){let t=atob(e),r=t.length,n=new Uint8Array(r);for(let o=0;o<r;o++)n[o]=t.charCodeAt(o);return n}function S(e){typeof e=="string"&&(e=new TextEncoder().encode(e));let t="",r=e.byteLength;for(let n=0;n<r;n++)t+=String.fromCharCode(e[n]);return btoa(t)}async function B(e,t){if(typeof e!="string"){let r=new Uint8Array(await e.arrayBuffer()),n=r.length>0?S(r):void 0;t={method:e.method,headers:Object.fromEntries(e.headers.entries()),base64Body:n},e=e.url}return syscall("sandboxFetch.fetch",e,t)}globalThis.nativeFetch=globalThis.fetch;function V(){globalThis.fetch=async function(e,t){let r=t&&t.body?S(new Uint8Array(await new Response(t.body).arrayBuffer())):void 0,n=await B(e,t&&{method:t.method,headers:t.headers,base64Body:r});return new Response(n.base64Body?L(n.base64Body):null,{status:n.status,headers:n.headers})}}b&&V();typeof self>"u"&&(self={syscall:()=>{throw new Error("Not implemented here")}});function i(e,...t){return globalThis.syscall(e,...t)}var l={};P(l,{applyAttributeExtractors:()=>_,getEnv:()=>z,getMode:()=>G,getSpaceConfig:()=>Y,getVersion:()=>Z,invokeCommand:()=>W,invokeFunction:()=>Q,invokeSpaceFunction:()=>$,listCommands:()=>N,listSyscalls:()=>I,reloadConfig:()=>H,reloadPlugs:()=>J});function Q(e,...t){return i("system.invokeFunction",e,...t)}function W(e,t){return i("system.invokeCommand",e,t)}function N(){return i("system.listCommands")}function I(){return i("system.listSyscalls")}function $(e,...t){return i("system.invokeSpaceFunction",e,...t)}function _(e,t,r){return i("system.applyAttributeExtractors",e,t,r)}async function Y(e,t){return await i("system.getSpaceConfig",e)??t}function J(){return i("system.reloadPlugs")}function H(){return i("system.reloadConfig")}function z(){return i("system.getEnv")}function G(){return i("system.getMode")}function Z(){return i("system.getVersion")}var g={};P(g,{listLanguages:()=>ne,parseLanguage:()=>re});function re(e,t){return i("language.parseLanguage",e,t)}function ne(){return i("language.listLanguages")}var p={};P(p,{parse:()=>ce,stringify:()=>ue});function ce(e){return i("yaml.parse",e)}function ue(e){return i("yaml.stringify",e)}function de(e,t){return F(e,r=>r.type===t)}function F(e,t){if(t(e))return[e];let r=[];if(e.children)for(let n of e.children)r=[...r,...F(n,t)];return r}function y(e){if(!e)return"";let t=[];if(e.text!==void 0)return e.text;for(let r of e.children)t.push(y(r));return t.join("")}function w(e,t=!0){if(de(e,"\u26A0").length>0)throw new Error(`Parse error in: ${y(e)}`);if(e.text!==void 0)return e.text;let n=[e.type];for(let o of e.children)o.type&&!o.type.endsWith("Mark")&&n.push(w(o,t)),o.text&&(t&&o.text.trim()||!t)&&n.push(o.text);return n}function O(e){let t={querySource:""},[r,n,...o]=e;if(r!=="Query")throw new Error(`Expected query type, got ${r}`);t.querySource=n[1];for(let s of o){let[u]=s;switch(u){case"WhereClause":{t.filter?t.filter=["and",t.filter,a(s[2])]:t.filter=a(s[2]);break}case"OrderClause":{t.orderBy||(t.orderBy=[]);for(let c of s.slice(2))if(c[0]==="OrderBy"){let f=c[1][1];c[2]?t.orderBy.push({expr:a(f),desc:c[2][1][1]==="desc"}):t.orderBy.push({expr:a(f),desc:!1})}break}case"LimitClause":{t.limit=a(s[2][1]);break}case"SelectClause":{for(let c of s.slice(2))c[0]==="Select"&&(t.select||(t.select=[]),c.length===2?t.select.push({name:d(c[1][1])}):t.select.push({name:d(c[3][1]),expr:a(c[1])}));break}case"RenderClause":{let c=s.find(f=>f[0]==="PageRef");t.render=c[1].slice(2,-2),t.renderAll=!!s.find(f=>f[0]==="all");break}default:throw new Error(`Unknown clause type: ${u}`)}}return t}function d(e){return e.startsWith("`")&&e.endsWith("`")?e.slice(1,-1):e}function a(e){if(["LVal","Expression","Value"].includes(e[0]))return a(e[1]);switch(e[0]){case"Attribute":return["attr",a(e[1]),d(e[3][1])];case"Identifier":return["attr",d(e[1])];case"String":return["string",e[1].slice(1,-1)];case"Number":return["number",+e[1]];case"Bool":return["boolean",e[1][1]==="true"];case"null":return["null"];case"Regex":return["regexp",e[1].slice(1,-1),"i"];case"List":{let t=[];for(let r of e.slice(2))r[0]==="Expression"&&t.push(r);return["array",t.map(a)]}case"Object":{let t=[];for(let r of e.slice(2)){if(typeof r=="string")continue;let[n,o,s,u]=r;t.push([o[1].slice(1,-1),a(u)])}return["object",t]}case"BinExpression":{let t=a(e[1]),r=e[2][0]==="InKW"?"in":e[2].trim(),n=a(e[3]);return[r,t,n]}case"LogicalExpression":{let t=a(e[1]),r=e[2],n=a(e[3]);return[r[1],t,n]}case"ParenthesizedExpression":return a(e[2]);case"Call":{let t=d(e[1][1]),r=[];for(let n of e.slice(2))n[0]==="Expression"&&r.push(n);return["call",t,r.map(a)]}case"UnaryExpression":{if(e[1][0]==="NotKW"||e[1][0]==="!")return["not",a(e[2])];if(e[1][0]==="-")return["-",a(e[2])];throw new Error(`Unknown unary expression: ${e[1][0]}`)}case"TopLevelVal":return["attr"];case"GlobalIdentifier":return["global",e[1].substring(1)];case"TernaryExpression":{let[t,r,n,o,s,u]=e;return["?",a(r),a(o),a(u)]}case"QueryExpression":return["query",O(e[2])];case"PageRef":return["pageref",e[1].slice(2,-2)];default:throw new Error(`Not supported: ${e[0]}`)}}async function E(e){let t=w(await g.parseLanguage("query",e));return O(t[1])}var x=class{constructor(t,r={}){this.maxSize=t;this.map=new Map(Object.entries(r))}map;set(t,r,n){let o={value:r,la:Date.now()};if(n){let s=this.map.get(t);s?.expTimer&&clearTimeout(s.expTimer),o.expTimer=setTimeout(()=>{this.map.delete(t)},n)}if(this.map.size>=this.maxSize){let s=this.getOldestKey();this.map.delete(s)}this.map.set(t,o)}get(t){let r=this.map.get(t);if(r)return r.la=Date.now(),r.value}remove(t){this.map.delete(t)}toJSON(){return Object.fromEntries(this.map.entries())}getOldestKey(){let t,r;for(let[n,o]of this.map.entries())(!r||o.la<r)&&(t=n,r=o.la);return t}};var _e=new x(50);function K(e,t,r){return l.invokeFunction("index.getObjectByRef",e,t,r)}async function R(e){return e?await K(e,"page",e)||{ref:e,name:e,tags:["page"],lastModified:"",created:""}:{ref:"",name:"",tags:["page"],lastModified:"",created:""}}async function U(e,t){let r=await l.getSpaceConfig(),n=await R(t);try{let o=await p.parse(e),s=await E(o.query),u=o.attributes||[],c=await l.invokeFunction("query.renderQuery",s,{page:n,config:r});return{html:`
+var __defProp = Object.defineProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// ../home/au/study/silverbullet/lib/plugos/worker_runtime.ts
+var workerPostMessage = (_msg) => {
+  throw new Error("Not initialized yet");
+};
+var runningAsWebWorker = typeof window === "undefined" && // @ts-ignore: globalThis
+typeof globalThis.WebSocketPair === "undefined";
+if (typeof Deno === "undefined") {
+  self.Deno = {
+    args: [],
+    // @ts-ignore: Deno hack
+    build: {
+      arch: "x86_64"
+    },
+    env: {
+      // @ts-ignore: Deno hack
+      get() {
+      }
+    }
+  };
+}
+var pendingRequests = /* @__PURE__ */ new Map();
+var syscallReqId = 0;
+if (runningAsWebWorker) {
+  globalThis.syscall = async (name, ...args) => {
+    return await new Promise((resolve, reject) => {
+      syscallReqId++;
+      pendingRequests.set(syscallReqId, { resolve, reject });
+      workerPostMessage({
+        type: "sys",
+        id: syscallReqId,
+        name,
+        args
+      });
+    });
+  };
+}
+function setupMessageListener(functionMapping2, manifest2, postMessageFn) {
+  if (!runningAsWebWorker) {
+    return;
+  }
+  workerPostMessage = postMessageFn;
+  self.addEventListener("message", (event) => {
+    (async () => {
+      const data = event.data;
+      switch (data.type) {
+        case "inv":
+          {
+            const fn = functionMapping2[data.name];
+            if (!fn) {
+              throw new Error(`Function not loaded: ${data.name}`);
+            }
+            try {
+              const result = await Promise.resolve(fn(...data.args || []));
+              workerPostMessage({
+                type: "invr",
+                id: data.id,
+                result
+              });
+            } catch (e) {
+              console.error(
+                "An exception was thrown as a result of invoking function",
+                data.name,
+                "error:",
+                e.message
+              );
+              workerPostMessage({
+                type: "invr",
+                id: data.id,
+                error: e.message
+              });
+            }
+          }
+          break;
+        case "sysr":
+          {
+            const syscallId = data.id;
+            const lookup = pendingRequests.get(syscallId);
+            if (!lookup) {
+              throw Error("Invalid request id");
+            }
+            pendingRequests.delete(syscallId);
+            if (data.error) {
+              lookup.reject(new Error(data.error));
+            } else {
+              lookup.resolve(data.result);
+            }
+          }
+          break;
+      }
+    })().catch(console.error);
+  });
+  workerPostMessage({
+    type: "manifest",
+    manifest: manifest2
+  });
+}
+function base64Decode(s) {
+  const binString = atob(s);
+  const len = binString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binString.charCodeAt(i);
+  }
+  return bytes;
+}
+function base64Encode(buffer) {
+  if (typeof buffer === "string") {
+    buffer = new TextEncoder().encode(buffer);
+  }
+  let binary = "";
+  const len = buffer.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(buffer[i]);
+  }
+  return btoa(binary);
+}
+async function sandboxFetch(reqInfo, options) {
+  if (typeof reqInfo !== "string") {
+    const body = new Uint8Array(await reqInfo.arrayBuffer());
+    const encodedBody = body.length > 0 ? base64Encode(body) : void 0;
+    options = {
+      method: reqInfo.method,
+      headers: Object.fromEntries(reqInfo.headers.entries()),
+      base64Body: encodedBody
+    };
+    reqInfo = reqInfo.url;
+  }
+  return syscall("sandboxFetch.fetch", reqInfo, options);
+}
+globalThis.nativeFetch = globalThis.fetch;
+function monkeyPatchFetch() {
+  globalThis.fetch = async function(reqInfo, init) {
+    const encodedBody = init && init.body ? base64Encode(
+      new Uint8Array(await new Response(init.body).arrayBuffer())
+    ) : void 0;
+    const r = await sandboxFetch(
+      reqInfo,
+      init && {
+        method: init.method,
+        headers: init.headers,
+        base64Body: encodedBody
+      }
+    );
+    return new Response(r.base64Body ? base64Decode(r.base64Body) : null, {
+      status: r.status,
+      headers: r.headers
+    });
+  };
+}
+if (runningAsWebWorker) {
+  monkeyPatchFetch();
+}
+
+// ../home/au/study/silverbullet/plug-api/syscall.ts
+if (typeof self === "undefined") {
+  self = {
+    syscall: () => {
+      throw new Error("Not implemented here");
+    }
+  };
+}
+function syscall2(name, ...args) {
+  return globalThis.syscall(name, ...args);
+}
+
+// ../home/au/study/silverbullet/plug-api/syscalls/system.ts
+var system_exports = {};
+__export(system_exports, {
+  applyAttributeExtractors: () => applyAttributeExtractors,
+  getEnv: () => getEnv,
+  getMode: () => getMode,
+  getSpaceConfig: () => getSpaceConfig,
+  getVersion: () => getVersion,
+  invokeCommand: () => invokeCommand,
+  invokeFunction: () => invokeFunction,
+  invokeSpaceFunction: () => invokeSpaceFunction,
+  listCommands: () => listCommands,
+  listSyscalls: () => listSyscalls,
+  reloadConfig: () => reloadConfig,
+  reloadPlugs: () => reloadPlugs
+});
+function invokeFunction(name, ...args) {
+  return syscall2("system.invokeFunction", name, ...args);
+}
+function invokeCommand(name, args) {
+  return syscall2("system.invokeCommand", name, args);
+}
+function listCommands() {
+  return syscall2("system.listCommands");
+}
+function listSyscalls() {
+  return syscall2("system.listSyscalls");
+}
+function invokeSpaceFunction(name, ...args) {
+  return syscall2("system.invokeSpaceFunction", name, ...args);
+}
+function applyAttributeExtractors(tags, text, tree) {
+  return syscall2("system.applyAttributeExtractors", tags, text, tree);
+}
+async function getSpaceConfig(key, defaultValue) {
+  return await syscall2("system.getSpaceConfig", key) ?? defaultValue;
+}
+function reloadPlugs() {
+  return syscall2("system.reloadPlugs");
+}
+function reloadConfig() {
+  return syscall2("system.reloadConfig");
+}
+function getEnv() {
+  return syscall2("system.getEnv");
+}
+function getMode() {
+  return syscall2("system.getMode");
+}
+function getVersion() {
+  return syscall2("system.getVersion");
+}
+
+// ../home/au/study/silverbullet/plug-api/syscalls/language.ts
+var language_exports = {};
+__export(language_exports, {
+  listLanguages: () => listLanguages,
+  parseLanguage: () => parseLanguage
+});
+function parseLanguage(language, code) {
+  return syscall2("language.parseLanguage", language, code);
+}
+function listLanguages() {
+  return syscall2("language.listLanguages");
+}
+
+// ../home/au/study/silverbullet/plug-api/syscalls/yaml.ts
+var yaml_exports = {};
+__export(yaml_exports, {
+  parse: () => parse,
+  stringify: () => stringify
+});
+function parse(text) {
+  return syscall2("yaml.parse", text);
+}
+function stringify(obj) {
+  return syscall2("yaml.stringify", obj);
+}
+
+// ../home/au/study/silverbullet/plug-api/lib/tree.ts
+function collectNodesOfType(tree, nodeType) {
+  return collectNodesMatching(tree, (n) => n.type === nodeType);
+}
+function collectNodesMatching(tree, matchFn) {
+  if (matchFn(tree)) {
+    return [tree];
+  }
+  let results = [];
+  if (tree.children) {
+    for (const child of tree.children) {
+      results = [...results, ...collectNodesMatching(child, matchFn)];
+    }
+  }
+  return results;
+}
+function renderToText(tree) {
+  if (!tree) {
+    return "";
+  }
+  const pieces = [];
+  if (tree.text !== void 0) {
+    return tree.text;
+  }
+  for (const child of tree.children) {
+    pieces.push(renderToText(child));
+  }
+  return pieces.join("");
+}
+function parseTreeToAST(tree, omitTrimmable = true) {
+  const parseErrorNodes = collectNodesOfType(tree, "\u26A0");
+  if (parseErrorNodes.length > 0) {
+    throw new Error(
+      `Parse error in: ${renderToText(tree)}`
+    );
+  }
+  if (tree.text !== void 0) {
+    return tree.text;
+  }
+  const ast = [tree.type];
+  for (const node of tree.children) {
+    if (node.type && !node.type.endsWith("Mark") && node.type !== "Comment") {
+      ast.push(parseTreeToAST(node, omitTrimmable));
+    }
+    if (node.text && (omitTrimmable && node.text.trim() || !omitTrimmable)) {
+      ast.push(node.text);
+    }
+  }
+  return ast;
+}
+
+// ../home/au/study/silverbullet/plug-api/lib/parse_query.ts
+function astToKvQuery(node) {
+  const query = {
+    querySource: ""
+  };
+  const [queryType, querySource, ...clauses] = node;
+  if (queryType !== "Query") {
+    throw new Error(`Expected query type, got ${queryType}`);
+  }
+  query.querySource = querySource[1];
+  for (const clause of clauses) {
+    const [clauseType] = clause;
+    switch (clauseType) {
+      case "WhereClause": {
+        if (query.filter) {
+          query.filter = [
+            "and",
+            query.filter,
+            expressionToKvQueryExpression(clause[2])
+          ];
+        } else {
+          query.filter = expressionToKvQueryExpression(clause[2]);
+        }
+        break;
+      }
+      case "OrderClause": {
+        if (!query.orderBy) {
+          query.orderBy = [];
+        }
+        for (const orderBy of clause.slice(2)) {
+          if (orderBy[0] === "OrderBy") {
+            const expr = orderBy[1][1];
+            if (orderBy[2]) {
+              query.orderBy.push({
+                expr: expressionToKvQueryExpression(expr),
+                desc: orderBy[2][1][1] === "desc"
+              });
+            } else {
+              query.orderBy.push({
+                expr: expressionToKvQueryExpression(expr),
+                desc: false
+              });
+            }
+          }
+        }
+        break;
+      }
+      case "LimitClause": {
+        query.limit = expressionToKvQueryExpression(clause[2][1]);
+        break;
+      }
+      case "SelectClause": {
+        for (const select of clause.slice(2)) {
+          if (select[0] === "Select") {
+            if (!query.select) {
+              query.select = [];
+            }
+            if (select.length === 2) {
+              query.select.push({
+                name: cleanIdentifier(select[1][1])
+              });
+            } else {
+              query.select.push({
+                name: cleanIdentifier(select[3][1]),
+                expr: expressionToKvQueryExpression(select[1])
+              });
+            }
+          }
+        }
+        break;
+      }
+      case "RenderClause": {
+        const pageRef = clause.find((c) => c[0] === "PageRef");
+        query.render = pageRef[1].slice(2, -2);
+        query.renderAll = !!clause.find((c) => c[0] === "all");
+        break;
+      }
+      default:
+        throw new Error(`Unknown clause type: ${clauseType}`);
+    }
+  }
+  return query;
+}
+function cleanIdentifier(s) {
+  if (s.startsWith("`") && s.endsWith("`")) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+function expressionToKvQueryExpression(node) {
+  if (["LVal", "Expression", "Value"].includes(node[0])) {
+    return expressionToKvQueryExpression(node[1]);
+  }
+  switch (node[0]) {
+    case "Attribute": {
+      return [
+        "attr",
+        expressionToKvQueryExpression(node[1]),
+        cleanIdentifier(node[3][1])
+      ];
+    }
+    case "Identifier":
+      return ["attr", cleanIdentifier(node[1])];
+    case "String":
+      return ["string", node[1].slice(1, -1)];
+    case "Number":
+      return ["number", +node[1]];
+    case "Bool":
+      return ["boolean", node[1][1] === "true"];
+    case "null":
+      return ["null"];
+    case "Regex":
+      return ["regexp", node[1].slice(1, -1), "i"];
+    case "List": {
+      const exprs = [];
+      for (const expr of node.slice(2)) {
+        if (expr[0] === "Expression") {
+          exprs.push(expr);
+        }
+      }
+      return ["array", exprs.map(expressionToKvQueryExpression)];
+    }
+    case "Object": {
+      const objAttrs = [];
+      for (const kv of node.slice(2)) {
+        if (typeof kv === "string") {
+          continue;
+        }
+        const [_, key, _colon, expr] = kv;
+        objAttrs.push([
+          key[1].slice(1, -1),
+          expressionToKvQueryExpression(
+            expr
+          )
+        ]);
+      }
+      return ["object", objAttrs];
+    }
+    case "BinExpression": {
+      const lval = expressionToKvQueryExpression(node[1]);
+      const binOp = node[2][0] === "in" ? "in" : node[2].trim();
+      const val = expressionToKvQueryExpression(node[3]);
+      return [binOp, lval, val];
+    }
+    case "LogicalExpression": {
+      const op1 = expressionToKvQueryExpression(node[1]);
+      const op = node[2];
+      const op2 = expressionToKvQueryExpression(node[3]);
+      return [op[1], op1, op2];
+    }
+    case "ParenthesizedExpression": {
+      return expressionToKvQueryExpression(node[2]);
+    }
+    case "Call": {
+      const fn = cleanIdentifier(node[1][1]);
+      const args = [];
+      for (const expr of node.slice(2)) {
+        if (expr[0] === "Expression") {
+          args.push(expr);
+        }
+      }
+      return ["call", fn, args.map(expressionToKvQueryExpression)];
+    }
+    case "UnaryExpression": {
+      if (node[1][0] === "not" || node[1][0] === "!") {
+        return ["not", expressionToKvQueryExpression(node[2])];
+      } else if (node[1][0] === "-") {
+        return ["-", expressionToKvQueryExpression(node[2])];
+      }
+      throw new Error(`Unknown unary expression: ${node[1][0]}`);
+    }
+    case "TopLevelVal": {
+      return ["attr"];
+    }
+    case "GlobalIdentifier": {
+      return ["global", node[1].substring(1)];
+    }
+    case "TernaryExpression": {
+      const [_, condition, _space, ifTrue, _space2, ifFalse] = node;
+      return [
+        "?",
+        expressionToKvQueryExpression(condition),
+        expressionToKvQueryExpression(ifTrue),
+        expressionToKvQueryExpression(ifFalse)
+      ];
+    }
+    case "QueryExpression": {
+      return ["query", astToKvQuery(node[2])];
+    }
+    case "PageRef": {
+      return ["pageref", node[1].slice(2, -2)];
+    }
+    default:
+      throw new Error(`Not supported: ${node[0]}`);
+  }
+}
+async function parseQuery(query) {
+  const queryAST = parseTreeToAST(
+    await language_exports.parseLanguage(
+      "query",
+      query
+    )
+  );
+  return astToKvQuery(queryAST[1]);
+}
+
+// ../home/au/study/silverbullet/lib/limited_map.ts
+var LimitedMap = class {
+  constructor(maxSize, initialJson = {}) {
+    this.maxSize = maxSize;
+    this.map = new Map(Object.entries(initialJson));
+  }
+  map;
+  /**
+   * @param key
+   * @param value
+   * @param ttl time to live (in ms)
+   */
+  set(key, value, ttl) {
+    const entry = { value, la: Date.now() };
+    if (ttl) {
+      const existingEntry = this.map.get(key);
+      if (existingEntry?.expTimer) {
+        clearTimeout(existingEntry.expTimer);
+      }
+      entry.expTimer = setTimeout(() => {
+        this.map.delete(key);
+      }, ttl);
+    }
+    if (this.map.size >= this.maxSize) {
+      const oldestKey = this.getOldestKey();
+      this.map.delete(oldestKey);
+    }
+    this.map.set(key, entry);
+  }
+  get(key) {
+    const entry = this.map.get(key);
+    if (entry) {
+      entry.la = Date.now();
+      return entry.value;
+    }
+    return void 0;
+  }
+  remove(key) {
+    this.map.delete(key);
+  }
+  toJSON() {
+    return Object.fromEntries(this.map.entries());
+  }
+  getOldestKey() {
+    let oldestKey;
+    let oldestTimestamp;
+    for (const [key, entry] of this.map.entries()) {
+      if (!oldestTimestamp || entry.la < oldestTimestamp) {
+        oldestKey = key;
+        oldestTimestamp = entry.la;
+      }
+    }
+    return oldestKey;
+  }
+};
+
+// ../home/au/study/silverbullet/lib/memory_cache.ts
+var cache = new LimitedMap(50);
+
+// ../home/au/study/silverbullet/plugs/index/plug_api.ts
+function getObjectByRef(page, tag, ref) {
+  return system_exports.invokeFunction("index.getObjectByRef", page, tag, ref);
+}
+
+// ../home/au/study/silverbullet/plugs/template/page.ts
+async function loadPageObject(pageName) {
+  if (!pageName) {
+    return {
+      ref: "",
+      name: "",
+      tags: ["page"],
+      lastModified: "",
+      created: ""
+    };
+  }
+  return await getObjectByRef(
+    pageName,
+    "page",
+    pageName
+  ) || {
+    ref: pageName,
+    name: pageName,
+    tags: ["page"],
+    lastModified: "",
+    created: ""
+  };
+}
+
+// ../home/au/study/silverbullet-plug-attribute-chart/attributeChart.ts
+async function widget(bodyText, pageName) {
+  const config = await system_exports.getSpaceConfig();
+  const pageObject = await loadPageObject(pageName);
+  try {
+    const chartConfig = await yaml_exports.parse(bodyText);
+    const query = await parseQuery(chartConfig.query);
+    const attributes = chartConfig.attributes || [];
+    const options = chartConfig.options || {};
+    const results = await system_exports.invokeFunction(
+      "query.renderQuery",
+      query,
+      {
+        page: pageObject,
+        config
+      }
+    );
+    return {
+      html: `
       <style>
         html[data-theme=dark] {
           color-scheme: dark;
@@ -19,19 +632,56 @@ var q=Object.defineProperty;var P=(e,t)=>{for(var r in t)q(e,r,{get:t[r],enumera
           font-family: var(--ui-font);
         }
       </style>
-      <canvas id="myChart"></canvas>`,script:`
+      <canvas id="myChart"></canvas>`,
+      script: `
         loadJsByUrl("https://cdn.jsdelivr.net/npm/chart.js").then(() => {
-          const chartData = ${JSON.stringify(me(c,u))};
+          const chartData = ${JSON.stringify(createChartData(results, attributes))};
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
             data: chartData,
-            options: {
-              scales: {
-                y: {
-                  beginAtZero: true
-                }
-              }
-            }
+            options: ${JSON.stringify(options)}
           })
         });
-      `}}catch(o){return{markdown:`**Error:** ${o.message}`}}}function me(e,t=[]){let r=e.map(o=>o.name.replace("Journal/Day/","")),n=[];for(let o of t)o.name&&n.push({type:o.type||"line",label:o.label||o.name,data:e.map(s=>s.attribute&&s.attribute[o.name])});return{labels:r,datasets:n}}var j={attributeChartWidget:U},D={name:"attributeChart",functions:{attributeChartWidget:{path:"attributeChart.ts:widget",codeWidget:"attributeChart"}},assets:{}},At={manifest:D,functionMapping:j};A(j,D);export{At as plug};
+      `
+    };
+  } catch (e) {
+    return { markdown: `**Error:** ${e.message}` };
+  }
+}
+function createChartData(results, attributes = []) {
+  const labels = results.map((d) => d.name.replace("Journal/Day/", ""));
+  const datasets = [];
+  for (const attribute of attributes) {
+    if (!attribute.name) {
+      continue;
+    }
+    datasets.push({
+      type: attribute.type || "line",
+      label: attribute.label || attribute.name,
+      data: results.map((d) => d.attribute && d.attribute[attribute.name]),
+      ...attribute.color && { backgroundColor: attribute.color, borderColor: attribute.color }
+    });
+  }
+  return { labels, datasets };
+}
+
+// 25e30fcec7407ee1.js
+var functionMapping = {
+  attributeChartWidget: widget
+};
+var manifest = {
+  "name": "attributeChart",
+  "functions": {
+    "attributeChartWidget": {
+      "path": "attributeChart.ts:widget",
+      "codeWidget": "attributeChart"
+    }
+  },
+  "assets": {}
+};
+var plug = { manifest, functionMapping };
+setupMessageListener(functionMapping, manifest, self.postMessage);
+export {
+  plug
+};
+//# sourceMappingURL=attributeChart.plug.js.map

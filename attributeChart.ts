@@ -5,15 +5,15 @@ import { loadPageObject } from "../silverbullet/plugs/template/page.ts";
 
 type Attribute = {
   name: string;
-  type?: string
-  label?: string
+  type?: string;
+  label?: string;
+  color?: string;
 };
 
 type ChartConfig = {
   query: string;
   attributes: Attribute[];
-  title?: string;
-  description?: string;
+  options?: object
 };
 
 export async function widget(
@@ -26,6 +26,7 @@ export async function widget(
     const chartConfig: ChartConfig = await YAML.parse(bodyText);
     const query = await parseQuery(chartConfig.query);
     const attributes = chartConfig.attributes || [];
+    const options = chartConfig.options || {};
     const results = await system.invokeFunction(
       "query.renderQuery",
       query,
@@ -63,13 +64,7 @@ export async function widget(
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
             data: chartData,
-            options: {
-              scales: {
-                y: {
-                  beginAtZero: true
-                }
-              }
-            }
+            options: ${JSON.stringify(options)}
           })
         });
       `
@@ -90,6 +85,7 @@ export function createChartData(results: any, attributes: Attribute[] = []) {
       type: attribute.type || 'line',
       label: attribute.label || attribute.name,
       data: results.map((d: any) => d.attribute && d.attribute[attribute.name]),
+      ...(attribute.color && { backgroundColor: attribute.color, borderColor: attribute.color }),
     }); 
   }
   return { labels, datasets };

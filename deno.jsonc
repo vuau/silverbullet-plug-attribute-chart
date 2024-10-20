@@ -14,6 +14,7 @@
   "importMap": "import_map.json",
   "tasks": {
     "build": "silverbullet plug:compile --importmap import_map.json attributeChart.plug.yaml",
+    "build:debug": "silverbullet plug:compile --debug --importmap import_map.json attributeChart.plug.yaml",
     "watch": "silverbullet plug:compile -w --importmap import_map.json attributeChart.plug.yaml"
   }
 }
