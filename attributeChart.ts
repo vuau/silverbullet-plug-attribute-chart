@@ -12,7 +12,7 @@ type Attribute = {
 type ChartConfig = {
   query: string;
   attributes: Attribute[];
-  options?: object
+  options?: object;
 };
 
 export async function widget(
