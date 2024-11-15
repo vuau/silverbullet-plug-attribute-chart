@@ -75,7 +75,7 @@ export async function widget(
 }
 
 export function createChartData(results: any, attributes: Attribute[] = []) {
-  const labels = results.map((d: any) => d.name.replace("Journal/Day/", ""));
+  const labels = results.map((d: any) => d.name.replace(/^.*\//, ""));
   const datasets = [];
   for (const attribute of attributes) {
     if (!attribute.name) {
