@@ -1,7 +1,6 @@
-import { YAML, system } from "../silverbullet/plug-api/syscalls.ts";
-import {parseQuery} from "../silverbullet/plug-api/lib/parse_query.ts";
-import { CodeWidgetContent } from "../silverbullet/plug-api/types.ts";
-import { loadPageObject } from "../silverbullet/plugs/template/page.ts";
+import { YAML, system, space } from "@silverbulletmd/silverbullet/syscalls";
+import { parseQuery } from "@silverbulletmd/silverbullet/lib/parse_query";
+import { CodeWidgetContent } from "@silverbulletmd/silverbullet/types";
 
 type Attribute = {
   name: string;
@@ -21,7 +20,8 @@ export async function widget(
   pageName: string
 ): Promise<CodeWidgetContent>  {
   const config = await system.getSpaceConfig();
-  const pageObject = await loadPageObject(pageName);
+  const pageObject = await space.readPage(pageName);
+  console.log(pageObject);
   try {
     const chartConfig: ChartConfig = await YAML.parse(bodyText);
     const query = await parseQuery(chartConfig.query);
