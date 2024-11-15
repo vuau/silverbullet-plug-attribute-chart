@@ -21,7 +21,6 @@ export async function widget(
 ): Promise<CodeWidgetContent>  {
   const config = await system.getSpaceConfig();
   const pageObject = await space.readPage(pageName);
-  console.log(pageObject);
   try {
     const chartConfig: ChartConfig = await YAML.parse(bodyText);
     const query = await parseQuery(chartConfig.query);
