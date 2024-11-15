@@ -59,7 +59,7 @@ export async function widget(
       <canvas id="myChart"></canvas>`,
       script: `
         loadJsByUrl("https://cdn.jsdelivr.net/npm/chart.js").then(() => {
-          const chartData = ${JSON.stringify(createChartData(results, attributes))};
+          const chartData = ${JSON.stringify(await createChartData(results, attributes))};
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
             data: chartData,
@@ -76,6 +76,11 @@ export async function widget(
 export function createChartData(results: any, attributes: Attribute[] = []) {
   const labels = results.map((d: any) => d.name.replace(/^.*\//, ""));
   const datasets = [];
+  
+  const nestedAttribute = (obj: any, path: string) => {
+    return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+  };
+
   for (const attribute of attributes) {
     if (!attribute.name) {
       continue;
@@ -83,9 +88,9 @@ export function createChartData(results: any, attributes: Attribute[] = []) {
     datasets.push({
       type: attribute.type || 'line',
       label: attribute.label || attribute.name,
-      data: results.map((d: any) => d.attribute && d.attribute[attribute.name]),
+      data: results.map((d: any) => d && nestedAttribute(d, attribute.name)),
       ...(attribute.color && { backgroundColor: attribute.color, borderColor: attribute.color }),
-    }); 
+    });
   }
   return { labels, datasets };
 }
