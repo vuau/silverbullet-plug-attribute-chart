@@ -59,7 +59,7 @@ export async function widget(
       <canvas id="myChart"></canvas>`,
       script: `
         loadJsByUrl("https://cdn.jsdelivr.net/npm/chart.js").then(() => {
-          const chartData = ${JSON.stringify(await createChartData(results, attributes))};
+          const chartData = ${JSON.stringify(createChartData(results, attributes))};
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
             data: chartData,
@@ -78,7 +78,14 @@ export function createChartData(results: any, attributes: Attribute[] = []) {
   const datasets = [];
   
   const nestedAttribute = (obj: any, path: string) => {
-    return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+    let value = path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+
+    // If not found, look under the "attribute" key for backward compatibility
+    if (value === undefined && obj?.attribute) {
+      value = obj.attribute[path];
+    }
+
+    return value;
   };
 
   for (const attribute of attributes) {
