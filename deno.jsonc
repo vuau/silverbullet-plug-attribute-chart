@@ -1,4 +1,11 @@
 {
+  "imports": {
+    "@silverbulletmd/silverbullet": "jsr:@silverbulletmd/silverbullet@^0.10.1"
+  },
+  "tasks": {
+    "build": "silverbullet plug:compile -c deno.jsonc attributeChart.plug.yaml",
+    "watch": "silverbullet plug:compile --debug -c deno.jsonc attributeChart.plug.yaml -w"
+  },
   "lint": {
     "rules": {
       "exclude": ["no-explicit-any"]
@@ -10,11 +17,5 @@
       "**/*.md",
       "*.plug.js"
     ]
-  },
-  "importMap": "import_map.json",
-  "tasks": {
-    "build": "silverbullet plug:compile --importmap import_map.json attributeChart.plug.yaml",
-    "build:debug": "silverbullet plug:compile --debug --importmap import_map.json attributeChart.plug.yaml",
-    "watch": "silverbullet plug:compile -w --importmap import_map.json attributeChart.plug.yaml"
   }
 }

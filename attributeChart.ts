@@ -1,7 +1,6 @@
-import { YAML, system } from "../silverbullet/plug-api/syscalls.ts";
-import {parseQuery} from "../silverbullet/plug-api/lib/parse_query.ts";
-import { CodeWidgetContent } from "../silverbullet/plug-api/types.ts";
-import { loadPageObject } from "../silverbullet/plugs/template/page.ts";
+import { YAML, system, space } from "@silverbulletmd/silverbullet/syscalls";
+import { parseQuery } from "@silverbulletmd/silverbullet/lib/parse_query";
+import { CodeWidgetContent } from "@silverbulletmd/silverbullet/types";
 
 type Attribute = {
   name: string;
@@ -13,7 +12,7 @@ type Attribute = {
 type ChartConfig = {
   query: string;
   attributes: Attribute[];
-  options?: object
+  options?: object;
 };
 
 export async function widget(
@@ -21,7 +20,7 @@ export async function widget(
   pageName: string
 ): Promise<CodeWidgetContent>  {
   const config = await system.getSpaceConfig();
-  const pageObject = await loadPageObject(pageName);
+  const pageObject = await space.readPage(pageName);
   try {
     const chartConfig: ChartConfig = await YAML.parse(bodyText);
     const query = await parseQuery(chartConfig.query);
@@ -60,7 +59,7 @@ export async function widget(
       <canvas id="myChart"></canvas>`,
       script: `
         loadJsByUrl("https://cdn.jsdelivr.net/npm/chart.js").then(() => {
-          const chartData = ${JSON.stringify(createChartData(results, attributes))};
+          const chartData = ${JSON.stringify(await createChartData(results, attributes))};
           const ctx = document.getElementById('myChart');
           const myChart = new Chart(ctx, {
             data: chartData,
@@ -75,8 +74,13 @@ export async function widget(
 }
 
 export function createChartData(results: any, attributes: Attribute[] = []) {
-  const labels = results.map((d: any) => d.name.replace("Journal/Day/", ""));
+  const labels = results.map((d: any) => d.name.replace(/^.*\//, ""));
   const datasets = [];
+  
+  const nestedAttribute = (obj: any, path: string) => {
+    return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+  };
+
   for (const attribute of attributes) {
     if (!attribute.name) {
       continue;
@@ -84,9 +88,9 @@ export function createChartData(results: any, attributes: Attribute[] = []) {
     datasets.push({
       type: attribute.type || 'line',
       label: attribute.label || attribute.name,
-      data: results.map((d: any) => d.attribute && d.attribute[attribute.name]),
+      data: results.map((d: any) => d && nestedAttribute(d, attribute.name)),
       ...(attribute.color && { backgroundColor: attribute.color, borderColor: attribute.color }),
-    }); 
+    });
   }
   return { labels, datasets };
 }
